@@ -20,7 +20,7 @@ app.use(express.json());
 
 // 首页
 
-app.get("/", (req,res)=>{
+app.get("/",(req,res)=>{
 
     res.json({
 
@@ -31,7 +31,6 @@ app.get("/", (req,res)=>{
     });
 
 });
-
 
 
 
@@ -65,8 +64,6 @@ function detectPlatform(url){
     return "unknown";
 
 }
-
-
 
 
 
@@ -113,6 +110,7 @@ app.post("/api/parse",async(req,res)=>{
 
 
 
+
     let result;
 
 
@@ -124,11 +122,13 @@ app.post("/api/parse",async(req,res)=>{
     }
 
 
+
     if(platform==="kuaishou"){
 
         result=await kuaishou.parse(url);
 
     }
+
 
 
     if(platform==="xiaohongshu"){
@@ -162,9 +162,9 @@ app.post("/api/parse",async(req,res)=>{
 
 
 
-// 视频代理播放下载接口
+// 视频代理接口
 
-app.get("/api/download", async(req,res)=>{
+app.get("/api/video",async(req,res)=>{
 
 
     const videoUrl=req.query.url;
@@ -184,40 +184,28 @@ app.get("/api/download", async(req,res)=>{
     try{
 
 
-        const headers={
-
-
-            "User-Agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
-
-
-            "Referer":
-            "https://www.douyin.com/",
-
-
-            "Accept":
-            "*/*",
-
-
-            "Range":
-            req.headers.range || ""
-
-        };
-
-
-
-
-
         const response = await axios({
 
-
             method:"GET",
-
 
             url:videoUrl,
 
 
-            headers:headers,
+            headers:{
+
+
+                "User-Agent":
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+
+
+                "Referer":
+                "https://www.douyin.com/",
+
+
+                "Range":
+                req.headers.range || ""
+
+            },
 
 
             responseType:"stream"
@@ -225,11 +213,6 @@ app.get("/api/download", async(req,res)=>{
 
         });
 
-
-
-
-
-        res.status(response.status);
 
 
 
@@ -242,40 +225,16 @@ app.get("/api/download", async(req,res)=>{
 
 
         res.setHeader(
-            "Accept-Ranges",
-            "bytes"
+            "Access-Control-Allow-Origin",
+            "*"
         );
 
 
 
-
-
-        if(response.headers["content-range"]){
-
-
-            res.setHeader(
-                "Content-Range",
-                response.headers["content-range"]
-            );
-
-
-        }
-
-
-
-
-        if(response.headers["content-length"]){
-
-
-            res.setHeader(
-                "Content-Length",
-                response.headers["content-length"]
-            );
-
-
-        }
-
-
+        res.setHeader(
+            "Accept-Ranges",
+            "bytes"
+        );
 
 
 
@@ -283,19 +242,14 @@ app.get("/api/download", async(req,res)=>{
 
 
 
-
-
     }catch(error){
 
 
-        console.log(
-            "视频代理错误:",
-            error.message
-        );
+        console.log(error.message);
 
 
         res.status(500).send(
-            "视频加载失败"
+            "视频获取失败"
         );
 
 
@@ -303,9 +257,6 @@ app.get("/api/download", async(req,res)=>{
 
 
 });
-
-
-
 
 
 
