@@ -12,11 +12,6 @@
 
 <style>
 
-*{
-box-sizing:border-box;
-}
-
-
 body{
 
 margin:0;
@@ -24,11 +19,7 @@ margin:0;
 background:#f5f5f5;
 
 font-family:
--apple-system,
-BlinkMacSystemFont,
-"Segoe UI",
-Roboto,
-Arial;
+-apple-system,BlinkMacSystemFont,"Segoe UI";
 
 }
 
@@ -45,25 +36,13 @@ padding:20px;
 
 
 
-h1{
-
-text-align:center;
-
-font-size:24px;
-
-}
-
-
-
 .card{
 
-background:#fff;
+background:white;
 
 padding:20px;
 
 border-radius:18px;
-
-box-shadow:0 5px 20px rgba(0,0,0,.08);
 
 }
 
@@ -73,17 +52,13 @@ textarea{
 
 width:100%;
 
-height:110px;
-
-border:1px solid #ddd;
+height:100px;
 
 border-radius:12px;
 
-padding:12px;
+padding:10px;
 
-font-size:15px;
-
-resize:none;
+box-sizing:border-box;
 
 }
 
@@ -97,7 +72,7 @@ height:45px;
 
 margin-top:15px;
 
-border:none;
+border:0;
 
 border-radius:25px;
 
@@ -111,19 +86,7 @@ font-size:16px;
 
 
 
-img{
-
-width:100%;
-
-margin-top:15px;
-
-border-radius:12px;
-
-}
-
-
-
-video{
+img,video{
 
 width:100%;
 
@@ -136,25 +99,13 @@ background:#000;
 }
 
 
-
-.info{
-
-margin-top:15px;
-
-font-size:14px;
-
-color:#555;
-
-}
-
-
 .tip{
-
-margin-top:15px;
 
 font-size:13px;
 
 color:#888;
+
+margin-top:15px;
 
 }
 
@@ -171,26 +122,34 @@ color:#888;
 <div class="container">
 
 
-<h1>
+<h2 align="center">
 短视频去水印
-</h1>
+</h2>
+
 
 
 <div class="card">
 
 
 <textarea id="input"
-placeholder="复制视频链接或分享文字，例如：朋友分享的抖音链接"></textarea>
+placeholder="复制抖音/快手/小红书分享文字或链接"></textarea>
+
 
 
 <button onclick="parseVideo()">
+
 开始解析
+
 </button>
 
 
+
 <div class="tip">
-打开页面会自动读取剪贴板内容
+
+打开网页自动读取剪贴板
+
 </div>
+
 
 
 <div id="result"></div>
@@ -200,6 +159,7 @@ placeholder="复制视频链接或分享文字，例如：朋友分享的抖音�
 
 
 </div>
+
 
 
 
@@ -216,15 +176,14 @@ const API =
 
 // 自动读取剪贴板
 
-window.onload = async()=>{
+window.onload=async()=>{
 
 
 try{
 
 
-const text =
+let text =
 await navigator.clipboard.readText();
-
 
 
 if(text){
@@ -237,13 +196,7 @@ extractUrl(text);
 }
 
 
-
-}catch(e){
-
-
-console.log("剪贴板读取失败");
-
-}
+}catch(e){}
 
 
 };
@@ -253,18 +206,17 @@ console.log("剪贴板读取失败");
 
 
 
-// 自动提取链接
+// 提取链接
 
 function extractUrl(text){
 
 
-const reg =
+let reg =
 /https?:\/\/[^\s]+/g;
 
 
-const result =
+let result =
 text.match(reg);
-
 
 
 return result ? result[0] : text;
@@ -285,14 +237,12 @@ let text =
 document.getElementById("input").value;
 
 
-
 let url =
 extractUrl(text);
 
 
 
 if(!url){
-
 
 alert("请输入视频链接");
 
@@ -309,14 +259,10 @@ document.getElementById("result").innerHTML =
 
 
 
-try{
-
-
 let response =
 await fetch(
 API+"/api/parse",
 {
-
 
 method:"POST",
 
@@ -339,6 +285,7 @@ url:url
 
 
 
+
 let data =
 await response.json();
 
@@ -350,11 +297,10 @@ if(!data.success){
 
 
 document.getElementById("result").innerHTML =
-data.message || "解析失败";
+data.message;
 
 
 return;
-
 
 }
 
@@ -364,7 +310,7 @@ return;
 
 
 let title =
-data.data.title || "视频";
+data.data.title || "";
 
 
 
@@ -374,41 +320,34 @@ data.data.cover || "";
 
 
 let video =
-data.data.video || "";
 
-
-
-
-
-if(!video){
-
-
-document.getElementById("result").innerHTML =
-"没有获取到视频地址";
-
-
-return;
-
-
-}
+API+
+"/api/download?url="+
+encodeURIComponent(
+data.data.video
+);
 
 
 
 
 
 
+document.getElementById("result").innerHTML =`
 
-document.getElementById("result").innerHTML = `
 
 
-<div class="info">
+<h3>
 
 ${title}
 
-</div>
+</h3>
+
+
 
 
 <img src="${cover}">
+
+
 
 
 
@@ -426,22 +365,25 @@ src="${video}">
 
 
 
-<a href="${video}" target="_blank">
+
+
+<a href="${video}" download>
 
 <button>
 
-打开视频保存
+下载无水印视频
 
 </button>
 
 </a>
 
 
+
+
+
 <div class="tip">
 
-苹果手机：打开视频后，长按视频 → 存储到照片<br>
-
-安卓手机：点击下载或保存视频
+苹果手机：播放后长按视频保存到照片
 
 </div>
 
@@ -450,25 +392,12 @@ src="${video}">
 
 
 
-
-}catch(error){
-
-
-
-document.getElementById("result").innerHTML =
-"请求失败："+error.message;
-
-
-
-}
-
-
-
 }
 
 
 
 </script>
+
 
 
 </body>
