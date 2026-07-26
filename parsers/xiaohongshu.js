@@ -1,21 +1,83 @@
+const axios = require("axios");
+
+
 module.exports = {
 
     name:"xiaohongshu",
 
+
     async parse(url){
 
-        return {
 
-            title:"",
+        try{
 
-            cover:"",
 
-            video:"",
+            const response = await axios.post(
 
-            message:"小红书解析模块已连接"
+                "https://qyapi.ipaybuy.cn/api/video",
 
-        };
+                {
+
+                    appId: process.env.QIYUN_APPID,
+
+                    appKey: process.env.QIYUN_APPKEY,
+
+                    url:url
+
+                },
+
+                {
+
+                    headers:{
+
+                        "Content-Type":"application/json"
+
+                    }
+
+                }
+
+            );
+
+
+            const result=response.data;
+
+
+            return {
+
+                title:
+                result.data?.title || "",
+
+
+                cover:
+                result.data?.cover_url || "",
+
+
+                video:
+                result.data?.video_url || "",
+
+
+                author:
+                result.data?.author || {}
+
+            };
+
+
+        }catch(error){
+
+
+            return {
+
+                message:"小红书解析失败",
+
+                error:error.message
+
+            };
+
+
+        }
+
 
     }
+
 
 };
