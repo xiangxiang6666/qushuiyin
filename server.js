@@ -9,14 +9,10 @@ const xiaohongshu = require("./parsers/xiaohongshu");
 
 const app = express();
 
-
 app.use(cors());
-
 app.use(express.json());
 
 
-
-// 测试
 
 app.get("/", (req,res)=>{
 
@@ -33,9 +29,9 @@ app.get("/", (req,res)=>{
 
 
 
-// 判断平台
 
 function detectPlatform(url){
+
 
     if(url.includes("douyin.com")){
 
@@ -67,7 +63,6 @@ function detectPlatform(url){
 
 
 
-// 解析接口
 
 app.post("/api/parse", async(req,res)=>{
 
@@ -94,11 +89,11 @@ app.post("/api/parse", async(req,res)=>{
 
 
 
-    let data;
-
-
-
     try{
+
+
+        let data;
+
 
 
         if(platform==="douyin"){
@@ -108,13 +103,11 @@ app.post("/api/parse", async(req,res)=>{
         }
 
 
-
         if(platform==="kuaishou"){
 
             data=await kuaishou.parse(url);
 
         }
-
 
 
         if(platform==="xiaohongshu"){
@@ -126,28 +119,14 @@ app.post("/api/parse", async(req,res)=>{
 
 
 
-        if(!data){
-
-            return res.json({
-
-                success:false,
-
-                message:"解析失败"
-
-            });
-
-        }
-
-
-
 
         res.json({
 
             success:true,
 
-            platform,
+            platform:platform,
 
-            data
+            data:data
 
         });
 
@@ -168,6 +147,7 @@ app.post("/api/parse", async(req,res)=>{
     }
 
 
+
 });
 
 
@@ -178,20 +158,13 @@ app.post("/api/parse", async(req,res)=>{
 
 
 
-// 视频代理
+
+// 视频播放接口
 
 app.get("/api/video", async(req,res)=>{
 
 
-    const url=req.query.url;
-
-
-
-    if(!url){
-
-        return res.status(400).send("没有视频地址");
-
-    }
+    const videoUrl=req.query.url;
 
 
 
@@ -200,15 +173,8 @@ app.get("/api/video", async(req,res)=>{
 
         const headers={
 
-
             "User-Agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-
-
-            "Referer":
-            "https://www.douyin.com/",
-
-
+            "Mozilla/5.0",
 
         };
 
@@ -224,25 +190,19 @@ app.get("/api/video", async(req,res)=>{
 
 
 
-
         const response=await axios({
 
             method:"GET",
 
-            url:url,
+            url:videoUrl,
 
             headers:headers,
 
             responseType:"stream",
 
-            validateStatus:function(){
-
-                return true;
-
-            }
+            validateStatus:()=>true
 
         });
-
 
 
 
@@ -253,39 +213,35 @@ app.get("/api/video", async(req,res)=>{
 
 
         res.setHeader(
-            "Content-Type",
-            response.headers["content-type"] || "video/mp4"
-        );
 
+            "Content-Type",
+
+            "video/mp4"
+
+        );
 
 
         res.setHeader(
+
             "Accept-Ranges",
+
             "bytes"
+
         );
-
-
-
-        if(response.headers["content-length"]){
-
-            res.setHeader(
-                "Content-Length",
-                response.headers["content-length"]
-            );
-
-        }
 
 
 
         if(response.headers["content-range"]){
 
             res.setHeader(
+
                 "Content-Range",
+
                 response.headers["content-range"]
+
             );
 
         }
-
 
 
 
@@ -293,14 +249,89 @@ app.get("/api/video", async(req,res)=>{
 
 
 
-    }catch(error){
-
-
-        console.log(error.message);
+    }catch(e){
 
 
         res.status(500).send(
-            "视频代理失败"
+            "视频加载失败"
+        );
+
+
+    }
+
+
+
+});
+
+
+
+
+
+
+
+
+
+// 下载接口
+
+app.get("/api/download", async(req,res)=>{
+
+
+    const videoUrl=req.query.url;
+
+
+
+    try{
+
+
+        const response=await axios({
+
+            method:"GET",
+
+            url:videoUrl,
+
+            headers:{
+
+                "User-Agent":
+                "Mozilla/5.0"
+
+            },
+
+            responseType:"stream"
+
+        });
+
+
+
+
+        res.setHeader(
+
+            "Content-Type",
+
+            "video/mp4"
+
+        );
+
+
+
+        res.setHeader(
+
+            "Content-Disposition",
+
+            "attachment; filename=qushuiyin.mp4"
+
+        );
+
+
+
+        response.data.pipe(res);
+
+
+
+    }catch(e){
+
+
+        res.status(500).send(
+            "下载失败"
         );
 
 
@@ -323,10 +354,8 @@ process.env.PORT || 3000;
 
 app.listen(PORT,()=>{
 
-
 console.log(
 "server running "+PORT
 );
-
 
 });
