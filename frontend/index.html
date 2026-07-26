@@ -7,15 +7,11 @@
 
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
+
 <title>短视频去水印</title>
 
 
 <style>
-
-*{
-box-sizing:border-box;
-}
-
 
 body{
 
@@ -23,15 +19,9 @@ margin:0;
 
 background:#f5f5f5;
 
-font-family:
--apple-system,
-BlinkMacSystemFont,
-"Segoe UI",
-Roboto,
-Arial;
+font-family:-apple-system,BlinkMacSystemFont;
 
 }
-
 
 
 .box{
@@ -45,24 +35,13 @@ padding:20px;
 }
 
 
-
-h2{
-
-text-align:center;
-
-}
-
-
-
 .card{
 
-background:white;
+background:#fff;
 
 padding:20px;
 
 border-radius:18px;
-
-box-shadow:0 5px 20px rgba(0,0,0,.08);
 
 }
 
@@ -74,13 +53,9 @@ width:100%;
 
 height:100px;
 
-border:1px solid #ddd;
-
-border-radius:12px;
-
 padding:12px;
 
-font-size:15px;
+border-radius:12px;
 
 }
 
@@ -90,7 +65,7 @@ button{
 
 width:100%;
 
-height:46px;
+height:45px;
 
 margin-top:15px;
 
@@ -108,27 +83,27 @@ font-size:16px;
 
 
 
-img{
+img,video{
 
 width:100%;
 
-margin-top:18px;
+margin-top:15px;
 
 border-radius:12px;
+
+background:#000;
 
 }
 
 
 
-video{
+.tip{
 
-width:100%;
+font-size:13px;
 
-margin-top:18px;
+color:#888;
 
-border-radius:12px;
-
-background:#000;
+margin-top:12px;
 
 }
 
@@ -142,23 +117,8 @@ font-weight:bold;
 
 line-height:1.5;
 
-margin-top:10px;
-
 }
 
-
-
-.tip{
-
-font-size:13px;
-
-color:#888;
-
-margin-top:15px;
-
-line-height:1.6;
-
-}
 
 
 </style>
@@ -167,26 +127,23 @@ line-height:1.6;
 </head>
 
 
-
 <body>
 
 
 <div class="box">
 
 
-<h2>
+<h2 align="center">
 短视频去水印
 </h2>
-
 
 
 <div class="card">
 
 
-
 <textarea id="input"
 
-placeholder="复制抖音、快手、小红书分享文字或链接">
+placeholder="粘贴抖音、快手、小红书链接">
 
 </textarea>
 
@@ -203,12 +160,10 @@ placeholder="复制抖音、快手、小红书分享文字或链接">
 <div id="result"></div>
 
 
-
 </div>
 
 
 </div>
-
 
 
 
@@ -217,14 +172,11 @@ placeholder="复制抖音、快手、小红书分享文字或链接">
 <script>
 
 
-const API =
+const API=
 "https://qushuiyin-api.bonto.run";
 
 
-
-let currentVideo="";
-
-
+let videoUrl="";
 
 
 
@@ -237,28 +189,18 @@ window.onload=async()=>{
 try{
 
 
-let text =
+let t=
 await navigator.clipboard.readText();
 
 
+if(t){
 
-if(text){
-
-
-document.getElementById("input").value =
-extractUrl(text);
-
+document.getElementById("input").value=t;
 
 }
 
 
-
-}catch(e){
-
-
-console.log("剪贴板读取失败");
-
-}
+}catch(e){}
 
 
 };
@@ -267,24 +209,13 @@ console.log("剪贴板读取失败");
 
 
 
+function getUrl(t){
 
+let r=t.match(/https?:\/\/[^\s]+/);
 
-// 提取链接
-
-function extractUrl(text){
-
-
-let arr =
-text.match(/https?:\/\/[^\s]+/g);
-
-
-
-return arr ? arr[0] : text;
-
+return r?r[0]:t;
 
 }
-
-
 
 
 
@@ -293,36 +224,20 @@ return arr ? arr[0] : text;
 async function parseVideo(){
 
 
-let text =
-document.getElementById("input").value;
-
-
-let url =
-extractUrl(text);
-
-
-
-if(!url){
-
-alert("请输入视频链接");
-
-return;
-
-}
+let url=
+getUrl(
+document.getElementById("input").value
+);
 
 
 
-document.getElementById("result").innerHTML =
+document.getElementById("result").innerHTML=
 "正在解析...";
 
 
 
 
-
-try{
-
-
-let res =
+let res=
 await fetch(
 API+"/api/parse",
 {
@@ -335,7 +250,6 @@ headers:{
 
 },
 
-
 body:JSON.stringify({
 
 url:url
@@ -347,32 +261,24 @@ url:url
 
 
 
-
-let data =
+let data=
 await res.json();
-
-
 
 
 
 if(!data.success){
 
-
-document.getElementById("result").innerHTML =
-data.message || "解析失败";
-
+document.getElementById("result").innerHTML=
+"解析失败";
 
 return;
-
 
 }
 
 
 
 
-
-currentVideo =
-
+videoUrl=
 API+
 "/api/video?url="+
 encodeURIComponent(
@@ -383,45 +289,35 @@ data.data.video
 
 
 
-
-document.getElementById("result").innerHTML =`
-
-
+document.getElementById("result").innerHTML=`
 
 <div class="title">
 
-${data.data.title || "无标题"}
+${data.data.title||""}
 
 </div>
-
-
 
 
 
 <button onclick="saveVideo()">
 
-保存视频到手机
+保存视频
 
 </button>
 
 
 
-
 <div class="tip">
 
-苹果手机点击后选择「存储视频」<br>
+苹果手机：点击后选择保存<br>
 
-安卓手机会直接保存
+安卓手机：直接下载
 
 </div>
 
 
 
-
-
-<img src="${data.data.cover || ''}">
-
-
+<img src="${data.data.cover}">
 
 
 
@@ -433,136 +329,28 @@ playsinline
 
 webkit-playsinline
 
-src="${currentVideo}">
+src="${videoUrl}">
 
 </video>
-
 
 
 `;
 
 
 
-
-
-}catch(error){
-
-
-document.getElementById("result").innerHTML =
-"解析失败："+error.message;
-
-
-}
-
-
-
 }
 
 
 
 
 
+function saveVideo(){
 
 
-
-
-async function saveVideo(){
-
-
-
-try{
-
-
-let response =
-await fetch(currentVideo);
-
-
-
-let blob =
-await response.blob();
-
-
-
-
-
-let file =
-new File(
-
-[blob],
-
-"qushuiyin.mp4",
-
-{
-
-type:"video/mp4"
-
-}
-
+window.open(
+videoUrl,
+"_blank"
 );
-
-
-
-
-
-
-
-if(
-
-navigator.canShare &&
-
-navigator.canShare({
-
-files:[file]
-
-})
-
-){
-
-
-await navigator.share({
-
-files:[file],
-
-title:"保存视频"
-
-});
-
-
-}else{
-
-
-let link =
-document.createElement("a");
-
-
-link.href =
-URL.createObjectURL(blob);
-
-
-link.download =
-"qushuiyin.mp4";
-
-
-link.click();
-
-
-}
-
-
-
-}catch(error){
-
-
-console.log(error);
-
-
-alert(
-"保存失败，请稍后重试"
-);
-
-
-}
-
 
 
 }
@@ -570,7 +358,6 @@ alert(
 
 
 </script>
-
 
 
 </body>
