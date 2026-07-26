@@ -5,7 +5,7 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
 <title>短视频去水印</title>
 
@@ -16,16 +16,17 @@ body{
 
 margin:0;
 
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;
+background:#f5f5f5;
 
-background:#f5f6fa;
+font-family:
+-apple-system,BlinkMacSystemFont;
 
 }
 
 
-.container{
+.box{
 
-max-width:420px;
+max-width:450px;
 
 margin:auto;
 
@@ -36,20 +37,11 @@ padding:20px;
 
 .card{
 
-background:white;
-
-border-radius:16px;
+background:#fff;
 
 padding:20px;
 
-box-shadow:0 5px 20px rgba(0,0,0,.08);
-
-}
-
-
-h2{
-
-text-align:center;
+border-radius:18px;
 
 }
 
@@ -58,42 +50,36 @@ textarea{
 
 width:100%;
 
-height:90px;
-
-border-radius:10px;
-
-border:1px solid #ddd;
+height:100px;
 
 padding:10px;
 
 box-sizing:border-box;
 
-font-size:15px;
+border-radius:10px;
 
 }
-
 
 
 button{
 
 width:100%;
 
-margin-top:15px;
-
 height:45px;
 
-border:none;
+margin-top:15px;
 
-border-radius:10px;
+border:0;
 
-background:#1677ff;
+border-radius:25px;
 
-color:white;
+background:#111;
+
+color:#fff;
 
 font-size:16px;
 
 }
-
 
 
 img,video{
@@ -102,19 +88,20 @@ width:100%;
 
 margin-top:15px;
 
-border-radius:10px;
+border-radius:12px;
 
 }
 
 
-#result{
+.tip{
 
-margin-top:15px;
+color:#888;
 
-font-size:14px;
+font-size:13px;
+
+margin-top:10px;
 
 }
-
 
 
 </style>
@@ -123,33 +110,38 @@ font-size:14px;
 </head>
 
 
+
 <body>
 
 
-<div class="container">
+<div class="box">
+
+
+<h2 align="center">
+短视频去水印
+</h2>
 
 
 <div class="card">
 
 
-<h2>短视频去水印</h2>
-
-
 <textarea id="input"
-placeholder="粘贴视频链接，支持抖音/快手/小红书"></textarea>
-
+placeholder="复制视频分享文字或链接">
+</textarea>
 
 
 <button onclick="parseVideo()">
-
 开始解析
-
 </button>
 
 
-<div id="result">
+<div class="tip">
+打开页面会自动读取剪贴板
+</div>
 
-等待输入...
+
+<div id="result"></div>
+
 
 </div>
 
@@ -157,15 +149,16 @@ placeholder="粘贴视频链接，支持抖音/快手/小红书"></textarea>
 </div>
 
 
-</div>
 
 
 
 <script>
 
 
-const API=
+const API =
 "https://qushuiyin-api.bonto.run";
+
+
 
 
 
@@ -189,16 +182,13 @@ extractUrl(text);
 }
 
 
-}catch(e){
+}catch(e){}
 
-
-console.log("剪贴板读取失败");
-
-
-}
 
 
 };
+
+
 
 
 
@@ -207,30 +197,31 @@ console.log("剪贴板读取失败");
 function extractUrl(text){
 
 
-let reg=
-/https?:\/\/[^\s]+/;
+let reg =
+/https?:\/\/[^\s]+/g;
 
 
-let match=text.match(reg);
+let arr =
+text.match(reg);
 
 
-return match ? match[0] : text;
+return arr ? arr[0] : text;
 
 
 }
 
 
 
-// 解析
+
 
 async function parseVideo(){
 
 
-let text=
+let text =
 document.getElementById("input").value;
 
 
-let url=
+let url =
 extractUrl(text);
 
 
@@ -250,8 +241,10 @@ document.getElementById("result").innerHTML=
 
 
 
-let res=
-await fetch(API+"/api/parse",{
+let res =
+await fetch(
+API+"/api/parse",
+{
 
 method:"POST",
 
@@ -270,8 +263,7 @@ url:url
 });
 
 
-
-let data=
+let data =
 await res.json();
 
 
@@ -281,42 +273,59 @@ if(!data.success){
 document.getElementById("result").innerHTML=
 data.message;
 
-
 return;
 
 }
 
 
 
-let video=
-data.data.video;
+let video =
+API+
+"/api/download?url="
++
+encodeURIComponent(
+data.data.video
+);
+
 
 
 document.getElementById("result").innerHTML=`
 
-<h3>${data.data.title||"解析成功"}</h3>
+<h3>
+${data.data.title || ""}
+</h3>
+
 
 <img src="${data.data.cover}">
 
 
-<video controls src="${video}"></video>
+
+<video 
+controls
+playsinline
+src="${video}">
+</video>
 
 
-<p>
 
-苹果手机：
-长按视频 → 存储到照片
+<a href="${video}" download>
 
-</p>
+<button>
+下载无水印视频
+</button>
+
+</a>
+
 
 `;
+
 
 
 }
 
 
-
 </script>
+
 
 
 </body>
