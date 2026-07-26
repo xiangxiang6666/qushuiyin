@@ -27,11 +27,9 @@ font-family:
 -apple-system,
 BlinkMacSystemFont,
 "Segoe UI",
-Roboto,
 Arial;
 
 }
-
 
 
 .box{
@@ -45,18 +43,9 @@ padding:20px;
 }
 
 
-
-h2{
-
-text-align:center;
-
-}
-
-
-
 .card{
 
-background:white;
+background:#fff;
 
 padding:20px;
 
@@ -70,15 +59,15 @@ textarea{
 
 width:100%;
 
-height:110px;
+height:100px;
 
 padding:12px;
 
-border:1px solid #ddd;
+font-size:15px;
 
 border-radius:12px;
 
-font-size:15px;
+border:1px solid #ddd;
 
 }
 
@@ -116,7 +105,7 @@ border-radius:25px;
 
 background:#111;
 
-color:white;
+color:#fff;
 
 font-size:16px;
 
@@ -183,28 +172,18 @@ font-size:13px;
 
 color:#888;
 
-line-height:1.6;
+margin-top:10px;
 
-margin-top:12px;
-
-}
-
-
-.loading{
-
-text-align:center;
-
-padding:20px;
-
-color:#666;
+line-height:1.5;
 
 }
+
 
 
 </style>
 
-</head>
 
+</head>
 
 
 <body>
@@ -213,7 +192,7 @@ color:#666;
 <div class="box">
 
 
-<h2>
+<h2 align="center">
 短视频去水印
 </h2>
 
@@ -222,9 +201,10 @@ color:#666;
 <div class="card">
 
 
+
 <textarea id="input"
 
-placeholder="复制抖音、快手、小红书分享文字或链接">
+placeholder="复制抖音、快手、小红书分享文字">
 
 </textarea>
 
@@ -233,11 +213,13 @@ placeholder="复制抖音、快手、小红书分享文字或链接">
 
 <div class="row">
 
+
 <button class="paste" onclick="pasteText()">
 
-粘贴链接
+粘贴
 
 </button>
+
 
 
 <button class="clear" onclick="clearText()">
@@ -246,7 +228,9 @@ placeholder="复制抖音、快手、小红书分享文字或链接">
 
 </button>
 
+
 </div>
+
 
 
 
@@ -256,6 +240,7 @@ placeholder="复制抖音、快手、小红书分享文字或链接">
 开始解析
 
 </button>
+
 
 
 
@@ -273,6 +258,7 @@ placeholder="复制抖音、快手、小红书分享文字或链接">
 
 
 
+
 <script>
 
 
@@ -280,14 +266,14 @@ const API =
 "https://qushuiyin-api.bonto.run";
 
 
-let currentVideo="";
+let downloadUrl="";
 
 
 
 
 
 
-// 点击粘贴
+// 粘贴
 
 async function pasteText(){
 
@@ -295,41 +281,31 @@ async function pasteText(){
 try{
 
 
-const text =
+let text =
 await navigator.clipboard.readText();
 
 
-if(text){
 
+document.getElementById("input").value=text;
 
-document.getElementById("input").value =
-text;
-
-
-}else{
-
-
-alert("剪贴板没有内容");
-
-}
 
 
 }catch(e){
 
 
-alert("请允许浏览器读取剪贴板");
-
-}
+alert("请允许读取剪贴板");
 
 
 }
 
 
 
+}
 
 
 
-// 清空
+
+
 
 function clearText(){
 
@@ -348,22 +324,19 @@ document.getElementById("result").innerHTML="";
 
 
 
-// 自动提取链接
-
 function extractUrl(text){
 
 
-let urls =
-text.match(
-/https?:\/\/[^\s]+/g
-);
+let arr =
+text.match(/https?:\/\/[^\s]+/g);
 
 
 
-return urls ? urls[0] : text;
+return arr ? arr[0] : text;
 
 
 }
+
 
 
 
@@ -386,6 +359,7 @@ extractUrl(text);
 
 
 
+
 if(!url){
 
 alert("请输入视频链接");
@@ -396,15 +370,10 @@ return;
 
 
 
+
 document.getElementById("result").innerHTML=
 
-`
-<div class="loading">
-
-正在解析...
-
-</div>
-`;
+"正在解析...";
 
 
 
@@ -413,7 +382,7 @@ document.getElementById("result").innerHTML=
 try{
 
 
-let response =
+let res =
 await fetch(
 
 API+"/api/parse",
@@ -437,7 +406,6 @@ url:url
 
 })
 
-
 }
 
 );
@@ -448,7 +416,7 @@ url:url
 
 
 let data =
-await response.json();
+await res.json();
 
 
 
@@ -472,16 +440,23 @@ return;
 
 
 
-currentVideo =
 
+downloadUrl =
 API+
-
-"/api/video?url="+
-
+"/api/download?url="+
 encodeURIComponent(
-
 data.data.video
+);
 
+
+
+
+
+let playUrl =
+API+
+"/api/video?url="+
+encodeURIComponent(
+data.data.video
 );
 
 
@@ -489,22 +464,19 @@ data.data.video
 
 
 
-
-document.getElementById("result").innerHTML=
-
-`
-
+document.getElementById("result").innerHTML=`
 
 <div class="title">
 
-${data.data.title || "无标题"}
+${data.data.title || ""}
 
 </div>
 
 
 
 
-<button class="save" onclick="saveVideo()">
+
+<button class="save" onclick="downloadVideo()">
 
 保存视频
 
@@ -512,13 +484,15 @@ ${data.data.title || "无标题"}
 
 
 
+
 <div class="tip">
 
-苹果手机点击后选择「存储视频」<br>
+安卓手机直接下载<br>
 
-安卓手机自动下载
+苹果手机打开后长按视频保存
 
 </div>
+
 
 
 
@@ -537,10 +511,9 @@ playsinline
 
 webkit-playsinline
 
-src="${currentVideo}">
+src="${playUrl}">
 
 </video>
-
 
 
 `;
@@ -549,12 +522,12 @@ src="${currentVideo}">
 
 
 
-}catch(error){
+}catch(e){
 
 
 document.getElementById("result").innerHTML=
 
-"解析失败："+error.message;
+"解析失败："+e.message;
 
 
 }
@@ -570,123 +543,21 @@ document.getElementById("result").innerHTML=
 
 
 
-
-// 保存视频
-
-async function saveVideo(){
+function downloadVideo(){
 
 
-
-try{
-
-
-const response =
-await fetch(currentVideo);
-
-
-
-const blob =
-await response.blob();
-
-
-
-
-const file =
-new File(
-
-[blob],
-
-"无水印视频.mp4",
-
-{
-
-type:"video/mp4"
-
-}
-
-);
-
-
-
-
-
-
-// iPhone分享保存
-
-if(
-
-navigator.canShare &&
-
-navigator.canShare({
-
-files:[file]
-
-})
-
-){
-
-
-
-await navigator.share({
-
-files:[file],
-
-title:"保存视频"
-
-});
-
-
-
-}else{
-
-
-
-// 安卓下载
-
-
-const a =
-document.createElement("a");
-
-
-a.href =
-URL.createObjectURL(blob);
-
-
-a.download =
-"无水印视频.mp4";
-
-
-document.body.appendChild(a);
-
-
-a.click();
-
-
-a.remove();
+window.location.href =
+downloadUrl;
 
 
 }
 
-
-
-}catch(e){
-
-
-alert(
-"保存失败，请稍后重试"
-);
-
-
-}
-
-
-
-}
 
 
 
 
 </script>
+
 
 
 </body>
