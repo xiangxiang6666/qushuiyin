@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 
-
 const douyin = require("./parsers/douyin");
 const kuaishou = require("./parsers/kuaishou");
 const xiaohongshu = require("./parsers/xiaohongshu");
@@ -17,10 +16,9 @@ app.use(express.json());
 
 
 
+// 测试
 
-// 首页
-
-app.get("/",(req,res)=>{
+app.get("/", (req,res)=>{
 
     res.json({
 
@@ -38,7 +36,6 @@ app.get("/",(req,res)=>{
 // 判断平台
 
 function detectPlatform(url){
-
 
     if(url.includes("douyin.com")){
 
@@ -69,13 +66,13 @@ function detectPlatform(url){
 
 
 
+
 // 解析接口
 
-app.post("/api/parse",async(req,res)=>{
+app.post("/api/parse", async(req,res)=>{
 
 
-    const {url}=req.body;
-
+    const url=req.body.url;
 
 
     if(!url){
@@ -84,7 +81,7 @@ app.post("/api/parse",async(req,res)=>{
 
             success:false,
 
-            message:"请输入视频链接"
+            message:"请输入链接"
 
         });
 
@@ -92,64 +89,83 @@ app.post("/api/parse",async(req,res)=>{
 
 
 
-    const platform=detectPlatform(url);
+
+    let platform=detectPlatform(url);
 
 
 
-    if(platform==="unknown"){
+    let data;
 
-        return res.json({
+
+
+    try{
+
+
+        if(platform==="douyin"){
+
+            data=await douyin.parse(url);
+
+        }
+
+
+
+        if(platform==="kuaishou"){
+
+            data=await kuaishou.parse(url);
+
+        }
+
+
+
+        if(platform==="xiaohongshu"){
+
+            data=await xiaohongshu.parse(url);
+
+        }
+
+
+
+
+        if(!data){
+
+            return res.json({
+
+                success:false,
+
+                message:"解析失败"
+
+            });
+
+        }
+
+
+
+
+        res.json({
+
+            success:true,
+
+            platform,
+
+            data
+
+        });
+
+
+
+    }catch(e){
+
+
+        res.json({
 
             success:false,
 
-            message:"暂不支持该平台"
+            message:e.message
 
         });
 
-    }
-
-
-
-
-    let result;
-
-
-
-    if(platform==="douyin"){
-
-        result=await douyin.parse(url);
 
     }
-
-
-
-    if(platform==="kuaishou"){
-
-        result=await kuaishou.parse(url);
-
-    }
-
-
-
-    if(platform==="xiaohongshu"){
-
-        result=await xiaohongshu.parse(url);
-
-    }
-
-
-
-
-    res.json({
-
-        success:true,
-
-        platform:platform,
-
-        data:result
-
-    });
-
 
 
 });
@@ -162,20 +178,18 @@ app.post("/api/parse",async(req,res)=>{
 
 
 
-// 视频代理接口
+// 视频代理
 
-app.get("/api/video",async(req,res)=>{
-
-
-    const videoUrl=req.query.url;
+app.get("/api/video", async(req,res)=>{
 
 
+    const url=req.query.url;
 
-    if(!videoUrl){
 
-        return res.status(400).send(
-            "缺少视频地址"
-        );
+
+    if(!url){
+
+        return res.status(400).send("没有视频地址");
 
     }
 
@@ -184,32 +198,48 @@ app.get("/api/video",async(req,res)=>{
     try{
 
 
-        const response = await axios({
+        const headers={
+
+
+            "User-Agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+
+
+            "Referer":
+            "https://www.douyin.com/",
+
+
+
+        };
+
+
+
+        if(req.headers.range){
+
+            headers.Range=req.headers.range;
+
+        }
+
+
+
+
+
+
+        const response=await axios({
 
             method:"GET",
 
-            url:videoUrl,
+            url:url,
 
+            headers:headers,
 
-            headers:{
+            responseType:"stream",
 
+            validateStatus:function(){
 
-                "User-Agent":
-                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+                return true;
 
-
-                "Referer":
-                "https://www.douyin.com/",
-
-
-                "Range":
-                req.headers.range || ""
-
-            },
-
-
-            responseType:"stream"
-
+            }
 
         });
 
@@ -217,16 +247,14 @@ app.get("/api/video",async(req,res)=>{
 
 
 
+
+        res.status(response.status);
+
+
+
         res.setHeader(
             "Content-Type",
-            "video/mp4"
-        );
-
-
-
-        res.setHeader(
-            "Access-Control-Allow-Origin",
-            "*"
+            response.headers["content-type"] || "video/mp4"
         );
 
 
@@ -235,6 +263,29 @@ app.get("/api/video",async(req,res)=>{
             "Accept-Ranges",
             "bytes"
         );
+
+
+
+        if(response.headers["content-length"]){
+
+            res.setHeader(
+                "Content-Length",
+                response.headers["content-length"]
+            );
+
+        }
+
+
+
+        if(response.headers["content-range"]){
+
+            res.setHeader(
+                "Content-Range",
+                response.headers["content-range"]
+            );
+
+        }
+
 
 
 
@@ -249,7 +300,7 @@ app.get("/api/video",async(req,res)=>{
 
 
         res.status(500).send(
-            "视频获取失败"
+            "视频代理失败"
         );
 
 
@@ -257,6 +308,8 @@ app.get("/api/video",async(req,res)=>{
 
 
 });
+
+
 
 
 
@@ -272,7 +325,7 @@ app.listen(PORT,()=>{
 
 
 console.log(
-"server running:"+PORT
+"server running "+PORT
 );
 
 
