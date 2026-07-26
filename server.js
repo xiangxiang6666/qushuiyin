@@ -1,60 +1,47 @@
 const express = require("express");
 const cors = require("cors");
 
+const douyin = require("./parsers/douyin");
+const kuaishou = require("./parsers/kuaishou");
+const xiaohongshu = require("./parsers/xiaohongshu");
+
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
 
-// 首页检测
-app.get("/", (req, res) => {
+
+// 首页
+app.get("/", (req,res)=>{
 
     res.json({
-        status: "ok",
-        message: "去水印API运行正常"
+
+        status:"ok",
+
+        message:"去水印API运行正常"
+
     });
 
 });
 
 
-// 浏览器测试页面
-app.get("/test", (req, res) => {
 
-    res.send(`
+// 测试页面
+app.get("/test",(req,res)=>{
+
+res.send(`
+
 <!DOCTYPE html>
+
 <html>
+
 <head>
+
 <meta charset="UTF-8">
-<title>去水印接口测试</title>
 
-<style>
-
-body{
-    font-family: Arial;
-    padding:30px;
-}
-
-input{
-    width:90%;
-    padding:10px;
-    font-size:16px;
-}
-
-button{
-    margin-top:15px;
-    padding:10px 25px;
-    font-size:16px;
-}
-
-pre{
-    background:#f5f5f5;
-    padding:15px;
-    margin-top:20px;
-    white-space:pre-wrap;
-}
-
-</style>
+<title>短视频去水印测试</title>
 
 </head>
 
@@ -65,13 +52,12 @@ pre{
 <h2>短视频去水印接口测试</h2>
 
 
-<input id="url" placeholder="请输入视频链接">
+<input id="url" 
+style="width:300px;padding:10px"
+placeholder="输入视频链接">
 
 
-<br>
-
-
-<button onclick="send()">
+<button onclick="parse()">
 开始解析
 </button>
 
@@ -81,26 +67,16 @@ pre{
 </pre>
 
 
-
 <script>
 
 
-async function send(){
+async function parse(){
 
 
 let url=document.getElementById("url").value;
 
 
-if(!url){
-
-alert("请输入视频链接");
-
-return;
-
-}
-
-
-let response = await fetch("/api/parse",{
+let res=await fetch("/api/parse",{
 
 method:"POST",
 
@@ -119,10 +95,10 @@ url:url
 });
 
 
-let data = await response.json();
+let data=await res.json();
 
 
-document.getElementById("result").innerText =
+document.getElementById("result").innerText=
 JSON.stringify(data,null,2);
 
 
@@ -135,14 +111,52 @@ JSON.stringify(data,null,2);
 </body>
 
 </html>
-    `);
+
+
+`);
 
 });
 
 
 
+
+
+// 判断平台
+
+function detectPlatform(url){
+
+
+    if(url.includes("douyin.com")){
+
+        return "douyin";
+
+    }
+
+
+    if(url.includes("kuaishou.com")){
+
+        return "kuaishou";
+
+    }
+
+
+    if(url.includes("xiaohongshu.com")){
+
+        return "xiaohongshu";
+
+    }
+
+
+    return "unknown";
+
+}
+
+
+
+
 // 解析接口
-app.post("/api/parse",(req,res)=>{
+
+app.post("/api/parse",async(req,res)=>{
 
 
     const {url}=req.body;
@@ -162,29 +176,62 @@ app.post("/api/parse",(req,res)=>{
 
 
 
-    // 当前为测试版本
-    // 后续这里接入真实解析程序
+    const platform=detectPlatform(url);
+
+
+
+    if(platform==="unknown"){
+
+        return res.json({
+
+            success:false,
+
+            message:"暂不支持该平台"
+
+        });
+
+    }
+
+
+
+    let result;
+
+
+
+    if(platform==="douyin"){
+
+        result=await douyin.parse(url);
+
+    }
+
+
+
+    if(platform==="kuaishou"){
+
+        result=await kuaishou.parse(url);
+
+    }
+
+
+
+    if(platform==="xiaohongshu"){
+
+        result=await xiaohongshu.parse(url);
+
+    }
+
 
 
     res.json({
 
         success:true,
 
-        message:"链接接收成功",
+        platform:platform,
 
-        data:{
-
-            original:url,
-
-            title:"测试视频",
-
-            cover:"",
-
-            video:""
-
-        }
+        data:result
 
     });
+
 
 
 });
@@ -192,15 +239,14 @@ app.post("/api/parse",(req,res)=>{
 
 
 
-// 启动服务
 
-const PORT = process.env.PORT || 3000;
+const PORT=process.env.PORT || 3000;
 
 
 app.listen(PORT,()=>{
 
-    console.log(
-        "Server running on port "+PORT
-    );
+console.log(
+"server running:"+PORT
+);
 
 });
