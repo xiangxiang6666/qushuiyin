@@ -39,27 +39,42 @@ module.exports = {
             );
 
 
+
             const result=response.data;
 
 
+
+            console.log("快手接口返回:",JSON.stringify(result));
+
+
+
             return {
+
 
                 title:
                 result.data?.title || "",
 
 
+
                 cover:
-                result.data?.cover_url || "",
+                result.data?.cover ||
+                result.data?.cover_url ||
+                "",
+
 
 
                 video:
-                result.data?.video_url || "",
+                result.data?.video ||
+                result.data?.video_url ||
+                "",
+
 
 
                 author:
                 result.data?.author || {}
 
             };
+
 
 
         }catch(error){
