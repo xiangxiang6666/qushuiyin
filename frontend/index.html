@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>短视频去水印</title>
+
+
+<style>
+
+body{
+
+margin:0;
+
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;
+
+background:#f5f6fa;
+
+}
+
+
+.container{
+
+max-width:420px;
+
+margin:auto;
+
+padding:20px;
+
+}
+
+
+.card{
+
+background:white;
+
+border-radius:16px;
+
+padding:20px;
+
+box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+}
+
+
+h2{
+
+text-align:center;
+
+}
+
+
+textarea{
+
+width:100%;
+
+height:90px;
+
+border-radius:10px;
+
+border:1px solid #ddd;
+
+padding:10px;
+
+box-sizing:border-box;
+
+font-size:15px;
+
+}
+
+
+
+button{
+
+width:100%;
+
+margin-top:15px;
+
+height:45px;
+
+border:none;
+
+border-radius:10px;
+
+background:#1677ff;
+
+color:white;
+
+font-size:16px;
+
+}
+
+
+
+img,video{
+
+width:100%;
+
+margin-top:15px;
+
+border-radius:10px;
+
+}
+
+
+#result{
+
+margin-top:15px;
+
+font-size:14px;
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<div class="card">
+
+
+<h2>短视频去水印</h2>
+
+
+<textarea id="input"
+placeholder="粘贴视频链接，支持抖音/快手/小红书"></textarea>
+
+
+
+<button onclick="parseVideo()">
+
+开始解析
+
+</button>
+
+
+<div id="result">
+
+等待输入...
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+
+const API=
+"https://qushuiyin-api.bonto.run";
+
+
+
+// 自动读取剪贴板
+
+window.onload=async()=>{
+
+
+try{
+
+
+let text=
+await navigator.clipboard.readText();
+
+
+if(text){
+
+document.getElementById("input").value=
+extractUrl(text);
+
+}
+
+
+}catch(e){
+
+
+console.log("剪贴板读取失败");
+
+
+}
+
+
+};
+
+
+
+// 自动提取链接
+
+function extractUrl(text){
+
+
+let reg=
+/https?:\/\/[^\s]+/;
+
+
+let match=text.match(reg);
+
+
+return match ? match[0] : text;
+
+
+}
+
+
+
+// 解析
+
+async function parseVideo(){
+
+
+let text=
+document.getElementById("input").value;
+
+
+let url=
+extractUrl(text);
+
+
+
+if(!url){
+
+alert("请输入视频链接");
+
+return;
+
+}
+
+
+
+document.getElementById("result").innerHTML=
+"正在解析...";
+
+
+
+let res=
+await fetch(API+"/api/parse",{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+url:url
+
+})
+
+});
+
+
+
+let data=
+await res.json();
+
+
+
+if(!data.success){
+
+document.getElementById("result").innerHTML=
+data.message;
+
+
+return;
+
+}
+
+
+
+let video=
+data.data.video;
+
+
+document.getElementById("result").innerHTML=`
+
+<h3>${data.data.title||"解析成功"}</h3>
+
+<img src="${data.data.cover}">
+
+
+<video controls src="${video}"></video>
+
+
+<p>
+
+苹果手机：
+长按视频 → 存储到照片
+
+</p>
+
+`;
+
+
+}
+
+
+
+</script>
+
+
+</body>
+
+</html>
