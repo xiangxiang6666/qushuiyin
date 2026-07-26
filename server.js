@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const axios = require("axios");
 
 const app = express();
 
@@ -8,48 +7,47 @@ app.use(cors());
 app.use(express.json());
 
 
-// 测试接口
-app.get("/", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "去水印API运行正常"
-  });
+// 首页测试
+app.get("/", (req,res)=>{
+    res.json({
+        status:"ok",
+        message:"去水印API运行正常"
+    });
 });
 
 
-// 解析接口
-app.post("/api/parse", async (req, res) => {
+// 视频解析接口
+app.post("/api/parse",(req,res)=>{
 
-  try {
+    const {url} = req.body;
 
-    const { url } = req.body;
 
-    if (!url) {
-      return res.json({
-        success: false,
-        message: "缺少视频链接"
-      });
+    if(!url){
+
+        return res.json({
+            success:false,
+            message:"请输入视频链接"
+        });
+
     }
 
 
-    // 这里暂时返回测试结果
-    // 后面接入真正解析接口
-
+    // 临时测试返回
     res.json({
-      success: true,
-      message: "收到视频链接",
-      url:url
+
+        success:true,
+
+        message:"收到视频链接",
+
+        data:{
+            original:url,
+            title:"测试视频",
+            cover:"",
+            video:""
+        }
+
     });
 
-
-  } catch (error) {
-
-    res.json({
-      success:false,
-      message:"服务器错误"
-    });
-
-  }
 
 });
 
@@ -59,8 +57,8 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT,()=>{
 
-  console.log(
-    `API running on port ${PORT}`
-  );
+    console.log(
+        "server running:"+PORT
+    );
 
 });
