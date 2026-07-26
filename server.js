@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
+
 
 const douyin = require("./parsers/douyin");
 const kuaishou = require("./parsers/kuaishou");
@@ -8,13 +10,16 @@ const xiaohongshu = require("./parsers/xiaohongshu");
 
 const app = express();
 
+
 app.use(cors());
+
 app.use(express.json());
 
 
 
 // 首页
-app.get("/", (req,res)=>{
+
+app.get("/",(req,res)=>{
 
     res.json({
 
@@ -25,98 +30,6 @@ app.get("/", (req,res)=>{
     });
 
 });
-
-
-
-// 测试页面
-app.get("/test",(req,res)=>{
-
-res.send(`
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>短视频去水印测试</title>
-
-</head>
-
-
-<body>
-
-
-<h2>短视频去水印接口测试</h2>
-
-
-<input id="url" 
-style="width:300px;padding:10px"
-placeholder="输入视频链接">
-
-
-<button onclick="parse()">
-开始解析
-</button>
-
-
-<pre id="result">
-等待测试...
-</pre>
-
-
-<script>
-
-
-async function parse(){
-
-
-let url=document.getElementById("url").value;
-
-
-let res=await fetch("/api/parse",{
-
-method:"POST",
-
-headers:{
-
-"Content-Type":"application/json"
-
-},
-
-body:JSON.stringify({
-
-url:url
-
-})
-
-});
-
-
-let data=await res.json();
-
-
-document.getElementById("result").innerText=
-JSON.stringify(data,null,2);
-
-
-}
-
-
-</script>
-
-
-</body>
-
-</html>
-
-
-`);
-
-});
-
 
 
 
@@ -154,12 +67,14 @@ function detectPlatform(url){
 
 
 
+
 // 解析接口
 
 app.post("/api/parse",async(req,res)=>{
 
 
     const {url}=req.body;
+
 
 
     if(!url){
@@ -194,6 +109,7 @@ app.post("/api/parse",async(req,res)=>{
 
 
 
+
     let result;
 
 
@@ -205,7 +121,6 @@ app.post("/api/parse",async(req,res)=>{
     }
 
 
-
     if(platform==="kuaishou"){
 
         result=await kuaishou.parse(url);
@@ -213,12 +128,12 @@ app.post("/api/parse",async(req,res)=>{
     }
 
 
-
     if(platform==="xiaohongshu"){
 
         result=await xiaohongshu.parse(url);
 
     }
+
 
 
 
@@ -233,6 +148,75 @@ app.post("/api/parse",async(req,res)=>{
     });
 
 
+});
+
+
+
+
+
+
+
+// 视频代理接口
+
+app.get("/api/download",async(req,res)=>{
+
+
+    const videoUrl=req.query.url;
+
+
+
+    if(!videoUrl){
+
+        return res.status(400).send(
+            "缺少视频地址"
+        );
+
+    }
+
+
+
+    try{
+
+
+        const response = await axios({
+
+            method:"GET",
+
+            url:videoUrl,
+
+            responseType:"stream"
+
+        });
+
+
+
+        res.setHeader(
+            "Content-Type",
+            "video/mp4"
+        );
+
+
+        res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=qushuiyin.mp4"
+        );
+
+
+
+        response.data.pipe(res);
+
+
+
+    }catch(error){
+
+
+        res.status(500).send(
+            "视频获取失败"
+        );
+
+
+    }
+
 
 });
 
@@ -240,13 +224,19 @@ app.post("/api/parse",async(req,res)=>{
 
 
 
-const PORT=process.env.PORT || 3000;
+
+
+const PORT =
+process.env.PORT || 3000;
+
 
 
 app.listen(PORT,()=>{
 
+
 console.log(
 "server running:"+PORT
 );
+
 
 });
